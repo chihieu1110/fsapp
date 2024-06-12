@@ -15,9 +15,19 @@ import AddCardIcon from '@mui/icons-material/AddCard'
 import DragHandleIcon from '@mui/icons-material/DragHandle'
 import ListCards from './ListCards/ListCards'
 import { mapOrder } from '~/utils/sorts'
-
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 function Column({ column }) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: column._id, data: { ...column } })
+
+  const columnStyles = {
+    touchAction:'none',
+    transform: CSS.Translate.toString(transform),
+    transition
+  }
+
   const [anchorEl, setAnchorEl] = React.useState(null)
   const open = Boolean(anchorEl)
   const handleClick = (event) => {
@@ -26,9 +36,14 @@ function Column({ column }) {
   const handleClose = () => {
     setAnchorEl(null)
   }
-  const orderedCards = mapOrder(column?.cards, column?.cardOrderIds,"_id")
+
+  const orderedCards = mapOrder(column?.cards, column?.cardOrderIds, '_id')
   return (
     <Box
+      ref={setNodeRef}
+      style={columnStyles}
+      {...attributes}
+      {...listeners}
       sx={{
         minWidth: '300px',
         maxWidth: '300px',
@@ -67,9 +82,7 @@ function Column({ column }) {
             <ExpandMoreIcon
               sx={{ color: 'text.primary', cursor: 'pointer' }}
               id="basic-column-dropdown"
-              aria-controls={
-                open ? 'basic-menu-column-dropdown' : undefined
-              }
+              aria-controls={open ? 'basic-menu-column-dropdown' : undefined}
               aria-haspopup="true"
               aria-expanded={open ? 'true' : undefined}
               onClick={handleClick}
@@ -129,7 +142,7 @@ function Column({ column }) {
         </Box>
       </Box>
 
-      <ListCards cards={orderedCards}/>
+      <ListCards cards={orderedCards} />
 
       <Box
         sx={{
