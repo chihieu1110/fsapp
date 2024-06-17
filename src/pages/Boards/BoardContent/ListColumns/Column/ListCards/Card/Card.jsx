@@ -4,13 +4,27 @@ import CardActions from '@mui/material/CardActions'
 import CardContent from '@mui/material/CardContent'
 import GroupIcon from '@mui/icons-material/Group'
 import { Attachment, ModeComment } from '@mui/icons-material'
-
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 function Card({ card }) {
+  const { attributes, listeners, setNodeRef, transform, transition,isDragging } =
+    useSortable({ id: card._id, data: { ...card } })
+
+  const cardStyles = {
+    touchAction:'none',
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 :undefined
+  }
   const shouldShowCardActions = () => {
     return !!card?.memberIds?.length || !!card?.comments?.length || !!card?.comments?.length
   }
   return (
     <MuiCard
+      ref={setNodeRef}
+      style={cardStyles}
+      {...attributes}
+      {...listeners}
       sx={{
         cursor: 'pointer',
         boxShadow: '0 1px 1px rgba(0,0,0,0.2)',
