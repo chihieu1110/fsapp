@@ -5,18 +5,20 @@ import {
   DndContext,
   MouseSensor,
   TouchSensor,
-  PointerSensor,
   useSensor,
   useSensors,
   DragOverlay,
   defaultDropAnimationSideEffects,
   closestCorners,
+  pointerWithin,
+  getFirstCollision,
 } from "@dnd-kit/core";
-import { useEffect, useState } from "react";
-import { cloneDeep } from "lodash";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { cloneDeep, isEmpty } from "lodash";
 import { arrayMove } from "@dnd-kit/sortable";
 import Column from "./ListColumns/Column/Column";
 import Card from "./ListColumns/Column/ListCards/Card/Card";
+import { generatePlaceHolderCard } from "~/utils/formatter";
 
 const ACTIVE_DRAG_ITEM_TYPE = {
   COLUMN: "ACTIVE_DRAG_ITEM_TYPE_COLUMN",
@@ -42,7 +44,7 @@ function BoardContent({ board }) {
   const [activeDragItemData, setActiveDragItemData] = useState(null);
   const [oldColumnWhenDraggingCard, setOldColumnWhenDraggingCard] =
     useState(null);
-
+  const lastOverId = useRef(null);
   useEffect(() => {
     setOrderedColumns(mapOrder(board?.columns, board?.columnOrderIds, "_id"));
   }, [board]);
@@ -88,6 +90,11 @@ function BoardContent({ board }) {
         nextActiveColumn.cards = nextActiveColumn.cards.filter(
           (card) => card._id !== activeDraggingCardId
         );
+
+        if (isEmpty(nextActiveColumn.cards)) {
+          nextActiveColumn.cards = [generatePlaceHolderCard(nextActiveColumn)];
+        }
+
         nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
           (card) => card._id
         );
@@ -104,6 +111,10 @@ function BoardContent({ board }) {
           newCardIndex,
           0,
           rebuilt_activeDraggingCardData
+        );
+
+        nextActiveColumn.cards = nextActiveColumn.cards.filter(
+          (card) => !card.FE_PlaceholderCard
         );
         nextOverColumn.cardOrderIds = nextOverColumn.cards.map(
           (card) => card._id
@@ -236,13 +247,56 @@ function BoardContent({ board }) {
     }),
   };
 
+  //args = arguments tham so doi so
+  const collisionDetectionStrategy = useCallback(
+    (args) => {
+      if (activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.COLUMN) {
+        return closestCorners(args);
+      }
+
+      const pointerIntersections = pointerWithin(args);
+      if (!pointerIntersections?.length) return;
+
+      // const intersections =
+      //   pointerIntersections.length > 0
+      //     ? pointerIntersections
+      //     : rectIntersection(args);
+
+      let overId = getFirstCollision(pointerIntersections, "id");
+
+      if (overId) {
+        const checkColumn = orderedColumns.find(
+          (column) => column._id === overId
+        );
+        if (checkColumn) {
+          overId = closestCorners({
+            ...args,
+            droppableContainers: args.droppableContainers.filter(
+              (container) => {
+                return (
+                  container.id !== overId &&
+                  checkColumn.cardOrderIds.includes(container.id)
+                );
+              }
+            ),
+          })[0]?.id;
+        }
+
+        lastOverId.current = overId;
+        return [{ id: overId }];
+      }
+
+      return lastOverId.current ? [{ id: lastOverId.current }] : [];
+    },
+    [activeDragItemType, orderedColumns]
+  );
   return (
     <DndContext
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={collisionDetectionStrategy}
     >
       <Box
         sx={{
