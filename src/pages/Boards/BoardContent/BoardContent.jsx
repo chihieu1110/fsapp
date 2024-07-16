@@ -3,8 +3,8 @@ import ListColumns from "./ListColumns/ListColumns";
 import { mapOrder } from "~/utils/sorts";
 import {
   DndContext,
-  MouseSensor,
-  TouchSensor,
+  // MouseSensor,
+  // TouchSensor,
   useSensor,
   useSensors,
   DragOverlay,
@@ -13,6 +13,7 @@ import {
   pointerWithin,
   getFirstCollision,
 } from "@dnd-kit/core";
+import { MouseSensor,TouchSensor } from "~/customDnD/DnDKitSensor";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { cloneDeep, isEmpty } from "lodash";
 import { arrayMove } from "@dnd-kit/sortable";
@@ -166,8 +167,10 @@ function BoardContent({ board }) {
 
   const handleDragEnd = (e) => {
     const { active, over } = e;
+    // check k ton tai hoac over thi k lam j (tranh crash)
     if (!active || !over) return;
 
+    //xu ly keo tha card
     if (activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.CARD) {
       const {
         id: activeDraggingCardId,
