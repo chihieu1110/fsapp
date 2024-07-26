@@ -13,20 +13,27 @@ import {
   pointerWithin,
   getFirstCollision,
 } from "@dnd-kit/core";
-import { MouseSensor,TouchSensor } from "~/customDnD/DnDKitSensor";
+import { MouseSensor, TouchSensor } from "~/customDnD/DnDKitSensor";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { cloneDeep, isEmpty } from "lodash";
 import { arrayMove } from "@dnd-kit/sortable";
 import Column from "./ListColumns/Column/Column";
 import Card from "./ListColumns/Column/ListCards/Card/Card";
-import { generatePlaceHolderCard } from "~/utils/formatter";
+import { generatePlaceholderCard } from "~/utils/formatter";
 
 const ACTIVE_DRAG_ITEM_TYPE = {
   COLUMN: "ACTIVE_DRAG_ITEM_TYPE_COLUMN",
   CARD: "ACTIVE_DRAG_ITEM_TYPE_CARD",
 };
 
-function BoardContent({ board }) {
+function BoardContent({
+  board,
+  createNewColumn,
+  createNewCard,
+  moveColumns,
+  repositionCard,
+  relocateCardToColumn,
+}) {
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: { distance: 10 },
   });
@@ -47,7 +54,7 @@ function BoardContent({ board }) {
     useState(null);
   const lastOverId = useRef(null);
   useEffect(() => {
-    setOrderedColumns(mapOrder(board?.columns, board?.columnOrderIds, "_id"));
+    setOrderedColumns(board.columns);
   }, [board]);
 
   const findColumnByCardId = (cardId) => {
@@ -63,7 +70,8 @@ function BoardContent({ board }) {
     over,
     activeColumn,
     activeDraggingCardId,
-    activeDraggingCardData
+    activeDraggingCardData,
+    initiateFrom
   ) => {
     setOrderedColumns((prevColumns) => {
       const overCardIndex = overColumn.cards?.findIndex(
@@ -93,7 +101,7 @@ function BoardContent({ board }) {
         );
 
         if (isEmpty(nextActiveColumn.cards)) {
-          nextActiveColumn.cards = [generatePlaceHolderCard(nextActiveColumn)];
+          nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)];
         }
 
         nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
@@ -119,6 +127,14 @@ function BoardContent({ board }) {
         );
         nextOverColumn.cardOrderIds = nextOverColumn.cards.map(
           (card) => card._id
+        );
+      }
+      if (initiateFrom === "handleDragEnd") {
+        relocateCardToColumn(
+          activeDraggingCardId,
+          oldColumnWhenDraggingCard._id,
+          nextOverColumn._id,
+          nextColumns
         );
       }
       return nextColumns;
@@ -160,7 +176,8 @@ function BoardContent({ board }) {
         over,
         activeColumn,
         activeDraggingCardId,
-        activeDraggingCardData
+        activeDraggingCardData,
+        "handleDragOver"
       );
     }
   };
@@ -190,7 +207,8 @@ function BoardContent({ board }) {
           over,
           activeColumn,
           activeDraggingCardId,
-          activeDraggingCardData
+          activeDraggingCardData,
+          "handleDragEnd"
         );
       } else {
         const oldCardIndex = oldColumnWhenDraggingCard?.cards?.findIndex(
@@ -204,17 +222,22 @@ function BoardContent({ board }) {
           oldCardIndex,
           newCardIndex
         );
+        const dndCardOrder = dndOrderedCards.map((card) => card._id);
+        // dodge flickering
         setOrderedColumns((prevCard) => {
           const nextColumns = cloneDeep(prevCard);
           const nextActiveColumn = nextColumns.find(
             (column) => column._id === overColumn._id
           );
           nextActiveColumn.cards = dndOrderedCards;
-          nextActiveColumn.cardOrderIds = dndOrderedCards.map(
-            (card) => card._id
-          );
+          nextActiveColumn.cardOrderIds = dndCardOrder;
           return nextColumns;
         });
+        repositionCard(
+          dndOrderedCards,
+          dndCardOrder,
+          oldColumnWhenDraggingCard._id
+        );
       }
     }
 
@@ -232,6 +255,8 @@ function BoardContent({ board }) {
         newColumnIndex
       );
       setOrderedColumns(dndOrderedColumn);
+
+      moveColumns(dndOrderedColumn);
     }
     //data sau khi keo tha luon phai null
     setActiveDragItemId(null);
@@ -310,7 +335,11 @@ function BoardContent({ board }) {
           p: "10px 0",
         }}
       >
-        <ListColumns columns={orderedColumns} />
+        <ListColumns
+          columns={orderedColumns}
+          createNewColumn={createNewColumn}
+          createNewCard={createNewCard}
+        />
         <DragOverlay dropAnimation={dropAnimation2}>
           {!activeDragItemType && null}
           {activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.COLUMN && (

@@ -9,18 +9,24 @@ import { useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import { toast } from "react-toastify";
 
-function ListColumns({ columns }) {
+function ListColumns({ columns,createNewColumn ,createNewCard}) {
   const [openNewColumnCreateForm, setOpenNewColumnCreateForm] = useState(false);
   const toggleOpenNewColumnForm = () =>
     setOpenNewColumnCreateForm(!openNewColumnCreateForm);
   const [newColumnValue, setNewColumnValue] = useState("");
-  const addNewColumn = () => {
+  const addNewColumn = async () => {
     if (!newColumnValue) {
       toast.error("nhap vo");
       return;
     }
+    const newColumnData = {
+      title:newColumnValue,
+      
+    }
+     createNewColumn(newColumnData)
+
     toggleOpenNewColumnForm();
-    setNewColumnValue("");
+    setNewColumnValue('');
   };
   return (
     <SortableContext
@@ -38,9 +44,8 @@ function ListColumns({ columns }) {
           "&::-webkit-scrollbar-track": { m: 2 },
         }}
       >
-        {columns?.map((column) => (
-          <Column key={column._id} column={column} />
-        ))}
+       {columns?.map(column => <Column key={column._id}
+       column={column} createNewCard={createNewCard}/>)}
         {!openNewColumnCreateForm ? (
           <Box
             onClick={toggleOpenNewColumnForm}

@@ -14,12 +14,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddCardIcon from "@mui/icons-material/AddCard";
 import DragHandleIcon from "@mui/icons-material/DragHandle";
 import ListCards from "./ListCards/ListCards";
-import { mapOrder } from "~/utils/sorts";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import CloseIcon from "@mui/icons-material/Close";
 import { toast } from "react-toastify";
-function Column({ column }) {
+function Column({ column, createNewCard }) {
   const {
     attributes,
     listeners,
@@ -46,18 +45,29 @@ function Column({ column }) {
     setAnchorEl(null);
   };
 
-  const orderedCards = mapOrder(column?.cards, column?.cardOrderIds, "_id");
+  const orderedCards = column.cards
   const [openNewCardCreateForm, setOpenNewCardCreateForm] = useState(false);
   const toggleOpenNewCardForm = () =>
     setOpenNewCardCreateForm(!openNewCardCreateForm);
   const [newCardValue, setNewCardValue] = useState("");
-  const addNewCard = () => {
+  const addNewCard = async () => {
     if (!newCardValue) {
-      toast.error('nhap title vo',{position:"bottom-right"})
+      toast.error("nhap title vo", { position: "bottom-right" });
       return;
     }
+    const newCardData = {
+      title: newCardValue,
+      columnId: column._id,
+    };
+    // * Gọi lên props function createNewCard nằm ở component cha cao nhất (boards/_id.jsx)
+    // * đưa dữ liệu Board ra ngoài Redux Global Store,
+    // * và lúc này có thể gọi luôn API ở đây là xong thay vì phải lần lượt gọi ngược lên những component cha phía bên trên.
+    // * Với việc sử dụng Redux như vậy thì code sẽ Clean hơn rất nhiều.
+    createNewCard(newCardData);
+    
+    //dong trang thai them card moi va clear input
     toggleOpenNewCardForm();
-    setNewCardValue("");
+    setNewCardValue('');
   };
   return (
     <div ref={setNodeRef} style={columnStyles} {...attributes}>
