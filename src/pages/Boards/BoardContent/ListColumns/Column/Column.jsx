@@ -18,7 +18,21 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import CloseIcon from "@mui/icons-material/Close";
 import { toast } from "react-toastify";
-function Column({ column, createNewCard }) {
+import { styled } from "@mui/material/styles";
+import { useConfirm } from "material-ui-confirm";
+
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  "&:hover": {
+    "& .icon-add, & .text-add": {
+      color: theme.palette.success.light,
+    },
+    "& .icon-delete": {
+      color: theme.palette.warning.dark,
+    },
+  },
+}));
+
+function Column({ column, createNewCard ,removeColumnDetails}) {
   const {
     attributes,
     listeners,
@@ -45,11 +59,15 @@ function Column({ column, createNewCard }) {
     setAnchorEl(null);
   };
 
-  const orderedCards = column.cards
+  const orderedCards = column.cards;
   const [openNewCardCreateForm, setOpenNewCardCreateForm] = useState(false);
-  const toggleOpenNewCardForm = () =>
+  const toggleOpenNewCardForm = () => {
+    console.log("toggleOpenNewCardForm called");
     setOpenNewCardCreateForm(!openNewCardCreateForm);
+  };
+
   const [newCardValue, setNewCardValue] = useState("");
+
   const addNewCard = async () => {
     if (!newCardValue) {
       toast.error("nhap title vo", { position: "bottom-right" });
@@ -59,15 +77,25 @@ function Column({ column, createNewCard }) {
       title: newCardValue,
       columnId: column._id,
     };
-    // * Gọi lên props function createNewCard nằm ở component cha cao nhất (boards/_id.jsx)
-    // * đưa dữ liệu Board ra ngoài Redux Global Store,
-    // * và lúc này có thể gọi luôn API ở đây là xong thay vì phải lần lượt gọi ngược lên những component cha phía bên trên.
-    // * Với việc sử dụng Redux như vậy thì code sẽ Clean hơn rất nhiều.
     createNewCard(newCardData);
-    
-    //dong trang thai them card moi va clear input
     toggleOpenNewCardForm();
-    setNewCardValue('');
+    setNewCardValue("");
+  };
+
+  const confirmDelete = useConfirm();
+  const deleteColumn = () => {
+    confirmDelete({
+      title: `Delete ${column.title} column`,
+      confirmationText: "Confirm",
+      cancellationText: "Cancel",
+      description: `Enter ${column.title} to delete`,
+      confirmationKeyword: `${column.title}`,
+      buttonOrder:["confirm", "cancel"]
+    })
+      .then(() => {
+        removeColumnDetails(column._id)
+      })
+      .catch(() => {});
   };
   return (
     <div ref={setNodeRef} style={columnStyles} {...attributes}>
@@ -123,16 +151,17 @@ function Column({ column, createNewCard }) {
               anchorEl={anchorEl}
               open={open}
               onClose={handleClose}
+              onClick={handleClose}
               MenuListProps={{
                 "aria-labelledby": "basic-column-dropdown",
               }}
             >
-              <MenuItem>
-                <ListItemIcon>
+              <StyledMenuItem onClick={toggleOpenNewCardForm}>
+                <ListItemIcon className="icon-add">
                   <AddCardIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>Add new card</ListItemText>
-              </MenuItem>
+                <ListItemText className="text-add">Add new card</ListItemText>
+              </StyledMenuItem>
 
               <MenuItem>
                 <ListItemIcon>
@@ -161,12 +190,12 @@ function Column({ column, createNewCard }) {
                 </ListItemIcon>
                 <ListItemText>Archive this column</ListItemText>
               </MenuItem>
-              <MenuItem>
-                <ListItemIcon>
+              <StyledMenuItem onClick={deleteColumn}>
+                <ListItemIcon className="icon-delete">
                   <DeleteIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText>Remove this column</ListItemText>
-              </MenuItem>
+              </StyledMenuItem>
             </Menu>
           </Box>
         </Box>
@@ -207,7 +236,6 @@ function Column({ column, createNewCard }) {
                 gap: 1,
               }}
             >
-              {" "}
               <TextField
                 label="Enter card title..."
                 type="text"

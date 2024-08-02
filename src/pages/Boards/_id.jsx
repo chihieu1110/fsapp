@@ -10,55 +10,49 @@ import {
   updateBoardDetailsAPI,
   updateColumnDetailsAPI,
   relocateCardToColumnAPI,
+  deleteColumnDetailsAPI
 } from "~/apis";
 import { isEmpty } from "lodash";
 import { generatePlaceholderCard } from "~/utils/formatter";
 import { mapOrder } from "~/utils/sorts";
+import { toast } from "react-toastify";
 
 function Board() {
   const [board, setBoard] = useState(null);
   useEffect(() => {
     const boardId = "66a08aeeffe4df794b255648";
     fetchBoardDetailsAPI(boardId).then((board) => {
-      board.columns = mapOrder(board.columns, board.columnOrderIds, "_id");
-
+      board.columns = mapOrder(board?.columns, board?.columnOrderIds, "_id");
       board.columns.forEach((column) => {
         if (isEmpty(column.cards)) {
           column.cards = [generatePlaceholderCard(column)];
           column.cardOrderIds = [generatePlaceholderCard(column)._id];
         } else {
-          column.cards = mapOrder(column.cards, column.cardOrderIds, "_id");
+          column.cards = mapOrder(column?.cards, column?.cardOrderIds, "_id");
         }
       });
       setBoard(board);
     });
   }, []);
-
-  // call api to create new columns and remake state board data
   const createNewColumn = async (newColumnData) => {
     const createdColumn = await newCreatedColumnAPI({
       ...newColumnData,
       boardId: board._id,
     });
-    // console.log('createdColumn', createdColumn)
 
     createdColumn.cards = [generatePlaceholderCard(createdColumn)];
     createdColumn.cardOrderIds = [generatePlaceholderCard(createdColumn)._id];
 
-    // update state board
     const newBoard = { ...board };
     newBoard.columns.push(createdColumn);
     newBoard.columnOrderIds.push(createdColumn._id);
     setBoard(newBoard);
   };
-
   const createNewCard = async (newCardData) => {
     const createdCard = await newCreatedCardAPI({
       ...newCardData,
       boardId: board._id,
     });
-    // console.log('createdCard', createdCard)
-
     const newBoard = { ...board };
     const columnToUpdate = newBoard.columns.find(
       (column) => column._id === createdCard.columnId
@@ -74,7 +68,6 @@ function Board() {
     }
     setBoard(newBoard);
   };
-
   const moveColumns = (dndOrderedColumns) => {
     const dndOrderedColumnsIds = dndOrderedColumns.map((column) => column._id);
     const newBoard = { ...board };
@@ -113,21 +106,34 @@ function Board() {
     newBoard.columnOrderIds = dndOrderedColumnsIds;
     setBoard(newBoard);
 
+    let previousCardOrderIds = dndOrderedColumns.find(
+      (c) => c._id === previousColumnId
+    )?.cardOrderIds;
+    if (previousCardOrderIds[0].includes("placeholder-card"))
+      previousCardOrderIds = [];
+
     relocateCardToColumnAPI({
       activeCardId,
       previousColumnId,
-      previousCardOrderIds: dndOrderedColumns.find(
-        (c) => c._id === previousColumnId
-      )?.cardOrderIds,
+      previousCardOrderIds,
       destinationColumnId,
-      followingCardOrderIds : dndOrderedColumns.find(
+      followingCardOrderIds: dndOrderedColumns.find(
         (c) => c._id === destinationColumnId
       )?.cardOrderIds,
     });
   };
+  const removeColumnDetails = (columnId) => {
+    const newBoard = { ...board };
+    newBoard.columns = newBoard.columns.filter(c => c._id !== columnId);
+    newBoard.columnOrderIds = newBoard.columnOrderIds.filter(_id => _id !== columnId);
+    setBoard(newBoard);
+    deleteColumnDetailsAPI(columnId).then(res => {
+      toast.success(res?.deleteResult)
+    })
+  };
   if (!board) {
     return (
-      <Box sx={{ display: "flex" }}>
+      <Box sx={{ display: "flex",  }}>
         <CircularProgress />
       </Box>
     );
@@ -143,6 +149,7 @@ function Board() {
         moveColumns={moveColumns}
         repositionCard={repositionCard}
         relocateCardToColumn={relocateCardToColumn}
+        removeColumnDetails={removeColumnDetails}
       />
     </Container>
   );

@@ -9,7 +9,12 @@ import { useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import { toast } from "react-toastify";
 
-function ListColumns({ columns,createNewColumn ,createNewCard}) {
+function ListColumns({
+  columns,
+  createNewColumn,
+  createNewCard,
+  removeColumnDetails,
+}) {
   const [openNewColumnCreateForm, setOpenNewColumnCreateForm] = useState(false);
   const toggleOpenNewColumnForm = () =>
     setOpenNewColumnCreateForm(!openNewColumnCreateForm);
@@ -20,13 +25,12 @@ function ListColumns({ columns,createNewColumn ,createNewCard}) {
       return;
     }
     const newColumnData = {
-      title:newColumnValue,
-      
-    }
-     createNewColumn(newColumnData)
+      title: newColumnValue,
+    };
+    createNewColumn(newColumnData);
 
     toggleOpenNewColumnForm();
-    setNewColumnValue('');
+    setNewColumnValue("");
   };
   return (
     <SortableContext
@@ -44,8 +48,14 @@ function ListColumns({ columns,createNewColumn ,createNewCard}) {
           "&::-webkit-scrollbar-track": { m: 2 },
         }}
       >
-       {columns?.map(column => <Column key={column._id}
-       column={column} createNewCard={createNewCard}/>)}
+        {columns?.map((column) => (
+          <Column
+            key={column._id}
+            column={column}
+            createNewCard={createNewCard}
+            removeColumnDetails={removeColumnDetails}
+          />
+        ))}
         {!openNewColumnCreateForm ? (
           <Box
             onClick={toggleOpenNewColumnForm}

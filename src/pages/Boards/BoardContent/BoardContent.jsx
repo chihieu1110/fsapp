@@ -1,10 +1,7 @@
 import { Box } from "@mui/material";
 import ListColumns from "./ListColumns/ListColumns";
-import { mapOrder } from "~/utils/sorts";
 import {
   DndContext,
-  // MouseSensor,
-  // TouchSensor,
   useSensor,
   useSensors,
   DragOverlay,
@@ -33,6 +30,7 @@ function BoardContent({
   moveColumns,
   repositionCard,
   relocateCardToColumn,
+  removeColumnDetails
 }) {
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: { distance: 10 },
@@ -339,6 +337,7 @@ function BoardContent({
           columns={orderedColumns}
           createNewColumn={createNewColumn}
           createNewCard={createNewCard}
+          removeColumnDetails={removeColumnDetails}
         />
         <DragOverlay dropAnimation={dropAnimation2}>
           {!activeDragItemType && null}
