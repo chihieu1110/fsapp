@@ -52,9 +52,10 @@ function BoardContent({
     useState(null);
   const lastOverId = useRef(null);
   useEffect(() => {
-    setOrderedColumns(board.columns);
+    if (board && board.columns) {
+      setOrderedColumns(board.columns);
+    }
   }, [board]);
-
   const findColumnByCardId = (cardId) => {
     return orderedColumns.find((column) =>
       column?.cards?.map((card) => card._id)?.includes(cardId)
