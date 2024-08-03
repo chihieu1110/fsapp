@@ -7,8 +7,8 @@
     "node": "18.x"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "cross-env BUILD_MODE=dev vite",
+    "build": "cross-env BUILD_MODE=production vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
@@ -22,6 +22,7 @@
     "@mui/material": "^5.15.17",
     "@mui/styled-engine-sc": "^6.0.0-alpha.18",
     "axios": "^1.7.2",
+    "cross-env": "^7.0.3",
     "express": "^4.19.2",
     "lodash": "^4.17.21",
     "material-ui-confirm": "^3.0.16",
