@@ -131,13 +131,7 @@ function Board() {
       toast.success(res?.deleteResult)
     })
   };
-  if (!board) {
-    return (
-      <Box sx={{ display: "flex",  }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+
   return (
     <Container disableGutters maxWidth={false} sx={{ height: "100vh" }}>
       <AppBar />
