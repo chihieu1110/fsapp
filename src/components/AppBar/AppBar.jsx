@@ -23,7 +23,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useState } from "react";
 
 function AppBar() {
-  const { mode, setMode } = useColorScheme();
   const [searchValue, setSearchValue] = useState("");
   return (
     <Box
@@ -51,7 +50,7 @@ function AppBar() {
               color: "white",
             }}
           >
-            Trello
+            Project Management
           </Typography>
         </Box>
 
