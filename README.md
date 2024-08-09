@@ -8,3 +8,4 @@ Currently, two official plugins are available:
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
 Thank you for visiting my website! Please be aware that it might take up to 1 minute to load initially. This is because we are currently using a free hosting service.
+Advanced features are currently in development, while the basics are complete and available for demo.
